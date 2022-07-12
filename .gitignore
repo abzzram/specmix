@@ -1,8 +1,1 @@
-
-*.ipynb
-*.pyc
-Data/.DS_Store
-Development/.DS_Store
-Development/Functions for spectral modeling.py
-Development/Functions for spectral modeling2.py
-Development/testpyscripts
+*pyc

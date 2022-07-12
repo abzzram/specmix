@@ -1,14 +1,13 @@
-## Starting new environment for Spectral Modeling project
-#7/1/22
-### In Terminal
-#download George's environment.yml file and put it into Spectral_Modeling folder 
-#navigate to Spectral_Modeling folder
-cd /Users/abhineet.ram/Spectral_Modeling
+# Starting new environment for specmix
 
-#create environment, it ran!
+# Clone `specmix`
+```
+git clone https://github.com/abhineetram/specmix.git
+cd specmix
+```
+
+# Create environment
 conda env create -f environment.yml
 
-#activate environment
-conda activate gb_img
-
-#start jupyter notebook
+# Activate environment
+conda activate specmix
