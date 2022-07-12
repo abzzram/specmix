@@ -29,7 +29,7 @@ import util
 
 # In[82]:
 
-
+print("Script starting...")
 #load FP data and retrieve wavelengths 
 FPs = 'mTagBFP2','mNeonGreen','mScarlet','iRFP670' #these have to be exact matches as FPbase name
 datafolder = './Data/'
@@ -61,7 +61,8 @@ beam_split = util.get_beam_spliiter(bs_folder, bs, Lambdas)
 
 # In[83]:
 
-## save the figs, 
+## save the figs,
+print("Starting plots...")
 FP_to_plot = 3
 plt.plot(Lambdas,EX_EM[0,FP_to_plot,:])#plot excitation for 3rd protein in our FPs
 plt.plot(Lambdas,EX_EM[1,FP_to_plot,:]) #plot emission 
