@@ -52,7 +52,7 @@ def get_FP_spectra(FPs):
 
 #function for retriving camera QEs
 #put it all into a function
-def get_QEs(Lambdas, folder_bsi, folder_ixon):
+def get_QEs(Lambdas, bsi_path, ixon_path):
     #Retreive quantum efficiency of the iXon and BSI Prime Express cameras
     #inputs: wavelengths corresponding to QE needed (should be the same as all other spectra data )
         #for intepolating nans ('https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array')
@@ -77,8 +77,8 @@ def get_QEs(Lambdas, folder_bsi, folder_ixon):
     
     #retrive camera quantum efficiency data
         #import QE for the cameras 
-    bsi_path = folder_bsi + 'BSI_Prime_Express_QE.csv'
-    ixon_path = folder_ixon + 'IXON-L-888 Sensor QE.csv'
+    # bsi_path = folder_bsi + 'BSI_Prime_Express_QE.csv'
+    # ixon_path = folder_ixon + 'IXON-L-888 Sensor QE.csv'
     BSI = pd.read_csv(bsi_path)
     iXon = pd.read_csv(ixon_path)
     #round the QE wavelengths for BSI data. (names of columns are as they were when downloaded)
