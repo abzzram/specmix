@@ -125,7 +125,7 @@ plt.ylabel('Tramsmission')
 
 #plot dichroic 
 #load dichroic 
-dichroic_file = './Drangonfly_transmission_spectra/Quad_pass_filter/Dichroic_transmission.csv'
+dichroic_file = datafolder + './Drangonfly_transmission_spectra/Quad_pass_filter/Dichroic_transmission.csv'
 dichroic = pd.read_csv(dichroic_file)
 #plot dichroic
 plt.plot(Lambdas,dichroic.iloc[:,1:])
