@@ -1,0 +1,11 @@
+Wavelength,Power Rating (mW) ,Width (+-),Purchased 
+405,100,5,Yes
+445,75,5,Yes
+488,150,2,Yes
+514,40,2,Yes
+561,100,2,Yes
+594,100,2,Yes
+637,140,5,Yes
+685,40,5,No
+730,30,5,No
+785,100,5,No
