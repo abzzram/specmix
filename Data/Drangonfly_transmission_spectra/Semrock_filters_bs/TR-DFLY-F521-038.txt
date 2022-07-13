@@ -1,9 +1,3 @@
-# Model spectrum TR-DFLY-F521-038
-# Created on 2/23/2021 2:52:19 PM
-Description=
-DateTimeCreated=2/23/2021 2:52:21 PM
-X(Unknown)	Y(Unknown)
-
 200.0	1E-06
 200.1	1E-06
 494.6	1E-06

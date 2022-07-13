@@ -1,15 +1,3 @@
-# Theoretical Spectrum of Semrock FF01-440/521/607/700 Optical Filter
-# The spectrum described by the following ASCII data represents a typical optical filter design for this product.
-# However, note that from time to time Semrock makes minor modifications to its optical filter designs for purposes such as improved
-# manufacturability that do not affect the ability for the filter to meet its stated specifications.
-# Specifications:
-# Starting Wavelength: 200(nm)
-# Ending Wavelength: 1600(nm)
-# AOI: 0
-# CHA: 0
-# Polarization: Avg
-# Data format:  Wavelength (nm) <tab> Transmission (0 to 1)
-
 200.0	1E-07
 200.1	1E-07
 200.2	1E-07
