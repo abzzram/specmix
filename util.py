@@ -233,7 +233,7 @@ def get_filepaths(datafolder):
     return(paths)
 
 #function for retreiving all data together in a list
-def get_spectra(FPs, paths, laser_lines,exposure_times):
+def get_spectra(FPs, paths, laser_lines):
     #function for retreving QE curves, filter spectra, FP spectra, dichroic mirror, laser data
     #inputs: 
     # FPs: list of flourescent proteins in experiment
@@ -245,7 +245,7 @@ def get_spectra(FPs, paths, laser_lines,exposure_times):
     QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
     #load saved laser lines
     all_lasers = pd.read_csv(paths['laser_file'])
-    lasers = all_lasers.loc[:,laser_lines]
+    lasers = all_lasers.loc[:, laser_lines]
     #load dichoric
     dichroic = pd.read_csv(paths['dichroic_file'])
 
@@ -254,5 +254,5 @@ def get_spectra(FPs, paths, laser_lines,exposure_times):
     #load beam splitter 
     beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
     #assemble dict
-    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY,"exposure_times":exposure_times}
+    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY}
     return(specdata)
