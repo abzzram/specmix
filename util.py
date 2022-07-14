@@ -11,6 +11,9 @@ import array
 from numpy import nan
 # %matplotlib inline
 import matplotlib.pyplot as plt
+import pdb
+import os
+from os.path import exists
 
 #make it all into a function for retreiving SP spectra 
 #returns spectra in EX_EM (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
@@ -18,7 +21,18 @@ import matplotlib.pyplot as plt
 #also returns 'lambas', which is the wavelegnths that EX/EM corresponds to (300 to 800)
 def get_FP_spectra(FPs):
 #download all FP data from FP base, modify Talon's code 
-    filename = wget.download('https://www.fpbase.org/api/proteins/spectra/?name__iexact=mTagBFP2&default_state__qy__gte=0.7&format=json')
+    # filename = wget.download('https://www.fpbase.org/api/proteins/spectra/?name__iexact=mTagBFP2&default_state__qy__gte=0.7&format=json')
+    FP_file = 'FP_spectra.wget'
+    file_exists = os.path.exists(FP_file) #check if file exists 
+    if not file_exists:
+        print('downloading spectra...')
+        filename = wget.download('https://www.fpbase.org/api/proteins/spectra/?name__iexact=mTagBFP2&default_state__qy__gte=0.7&format=json', out = 'FP_spectra.wget')
+        # url = 'https://www.fpbase.org/api/proteins/spectra/?name__iexact=mTagBFP2&default_state__qy__gte=0.7&format=json'
+        # !wget 
+    else:
+        print('spectra file found...')
+        filename = './FP_spectra.wget'
+
     with open(filename, 'r') as f:
         fc = json.load(f)
         f.close()
@@ -48,11 +62,13 @@ def get_FP_spectra(FPs):
             EX_EM[1,i,j]  = lambda_em[n2,1]
     #get quantum yield!
     QY[i] = fc[int(ifp)]['spectra'][1]['qy']
+    # os.remove('FPs.wget') #delete the downloaded FP file 
     return(EX_EM,QY, lambdas)
+
 
 #function for retriving camera QEs
 #put it all into a function
-def get_QEs(Lambdas, folder_bsi, folder_ixon):
+def get_QEs(Lambdas, bsi_path, ixon_path):
     #Retreive quantum efficiency of the iXon and BSI Prime Express cameras
     #inputs: wavelengths corresponding to QE needed (should be the same as all other spectra data )
         #for intepolating nans ('https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array')
@@ -77,8 +93,8 @@ def get_QEs(Lambdas, folder_bsi, folder_ixon):
     
     #retrive camera quantum efficiency data
         #import QE for the cameras 
-    bsi_path = folder_bsi + 'BSI_Prime_Express_QE.csv'
-    ixon_path = folder_ixon + 'IXON-L-888 Sensor QE.csv'
+    # bsi_path = folder_bsi + 'BSI_Prime_Express_QE.csv'
+    # ixon_path = folder_ixon + 'IXON-L-888 Sensor QE.csv'
     BSI = pd.read_csv(bsi_path)
     iXon = pd.read_csv(ixon_path)
     #round the QE wavelengths for BSI data. (names of columns are as they were when downloaded)
@@ -100,16 +116,25 @@ def get_QEs(Lambdas, folder_bsi, folder_ixon):
         if len(wvl_index2)> 0:
             QE_cameras[i,1] = iXon.iloc[int(wvl_index2),1]#get QE for iXon
     #interpolate nans
-    y = QE_cameras[:,0]
-    nans, x= nan_helper(y)
-    y[nans]= np.interp(x(nans), x(~nans), y[~nans])
-    QE_cameras[:,0] = y
-    #interpolate nans
-    y = QE_cameras[:,1]
-    nans, x= nan_helper(y)
-    y[nans]= np.interp(x(nans), x(~nans), y[~nans])
-    QE_cameras[:,1] = y
+    # import pdb; pdb.set_trace()
+    # y = QE_cameras[:,0]
+    # nans, x= nan_helper(y)
+    # y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+    # QE_cameras[:,0] = y
+    # #interpolate nans
+    # y = QE_cameras[:,1]
+    # nans, x= nan_helper(y)
+    # y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+    # QE_cameras[:,1] = y
+    # return QE_cameras
+    for icam in range(2):
+        print(icam)
+        y = QE_cameras[:,icam]
+        nans, x= nan_helper(y)
+        y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+        QE_cameras[:,icam] = y
     return QE_cameras
+   
 
 
 #fucntion for getting filter data
@@ -131,7 +156,7 @@ def get_em_filters(filter_folder, filters, wavelengths):
     #loop through filters to assemle filter transmission 
     for i, iname in enumerate(filters):
         fname = filter_folder + iname + '.txt'#assemble file name 
-        cur_filt = pd.read_csv((fname),delimiter='\t', skiprows=5,names=colnames)
+        cur_filt = pd.read_csv((fname),delimiter='\t', skiprows=0,names=colnames)
         for iwvl,wvl in enumerate(wavelengths):
     #         print(wvl)
     #         print(cur_filt.iloc[iwvl,:])
@@ -188,3 +213,46 @@ def get_beam_spliiter(bs_folder, bs, wavelengths):
             beam_split[iwvl,1] = bs.iloc[wvl_index,1]#get values    
     beam_split[:,0] =  1 - beam_split[:,1]
     return(beam_split)
+
+##function for retrieving default file paths
+def get_filepaths(datafolder):
+    #assemble paths names of parts in Dragonfly_tramsission_spectra folder
+    #input: location of folder where Dragonfly_transmission_spectra folder lives
+    #assemble name of filters and beam spliter
+    #returns dictionary of paths and names of default filters
+    #FIX ME, optional input where you can change filter names 
+    bsi_path =  datafolder + 'Drangonfly_transmission_spectra/BSI_Prime_Express/BSI_Prime_Express_QE.csv'
+    ixon_path = datafolder + 'Drangonfly_transmission_spectra/iXonCamera/IXON-L-888 Sensor QE.csv'
+    laser_file = datafolder + 'Drangonfly_transmission_spectra/Lasers/Laser_lines.csv'
+    dichroic_file = datafolder + 'Drangonfly_transmission_spectra/Quad_pass_filter/Dichroic_transmission.csv'
+    filter_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
+    bs_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
+    filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
+    bs = ['TR-DFLY-CMDM-565'] #name of beam spliter 
+    paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
+    return(paths)
+
+#function for retreiving all data together in a list
+def get_spectra(FPs, paths, laser_lines,exposure_times):
+    #function for retreving QE curves, filter spectra, FP spectra, dichroic mirror, laser data
+    #inputs: 
+    # FPs: list of flourescent proteins in experiment
+    # paths: output of get_filepaths function
+    #lines lines, waveslengths of lasers used (ie 405)
+    #example:
+
+    EX_EM, QY, Lambdas = get_FP_spectra(FPs) #get spectra
+    QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
+    #load saved laser lines
+    all_lasers = pd.read_csv(paths['laser_file'])
+    lasers = all_lasers.loc[:,laser_lines]
+    #load dichoric
+    dichroic = pd.read_csv(paths['dichroic_file'])
+
+    #load filters
+    filter_trans = get_em_filters(paths['filter_folder'], paths['filters'], Lambdas)
+    #load beam splitter 
+    beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
+    #assemble dict
+    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY,"exposure_times":exposure_times}
+    return(specdata)

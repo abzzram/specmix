@@ -33,8 +33,8 @@ print("Script starting...")
 #load FP data and retrieve wavelengths 
 FPs = 'mTagBFP2','mNeonGreen','mScarlet','iRFP670' #these have to be exact matches as FPbase name
 datafolder = './Data/'
-folder_bsi = datafolder + 'Drangonfly_transmission_spectra/BSI_Prime_Express/'
-folder_ixon = datafolder + 'Drangonfly_transmission_spectra/iXonCamera/'
+folder_bsi = datafolder + 'Drangonfly_transmission_spectra/BSI_Prime_Express/BSI_Prime_Express_QE.csv'
+folder_ixon = datafolder + 'Drangonfly_transmission_spectra/iXonCamera/IXON-L-888 Sensor QE.csv'
 EX_EM, QY, Lambdas = util.get_FP_spectra(FPs) #get spectra
 QE_cameras = util.get_QEs(Lambdas,folder_bsi,folder_ixon) #get camera QE
 
@@ -83,7 +83,7 @@ plt.title('Camera Quantum Efficieny Curves')
 plt.legend(('BSI Prime Express','Andor iXon'))
 plt.xlabel('Wavelength')
 plt.ylabel('Tramsmission')
-plt.show
+plt.show()
 
 
 # In[85]:
@@ -119,7 +119,7 @@ plt.plot(Lambdas,lasers.iloc[:,1:])
 plt.title('Laser Lines')
 plt.xlabel('Wavelength')
 plt.ylabel('Tramsmission')
-
+plt.show()
 
 # In[88]:
 
