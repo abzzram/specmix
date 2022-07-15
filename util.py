@@ -60,10 +60,10 @@ def get_FP_spectra(FPs):
         for n2, ilambda2 in enumerate(lambda_em):
             j = np.argwhere(lambdas == ilambda2[0])[0][0] #find index of ex wavelength containedin databse
             EX_EM[1,i,j]  = lambda_em[n2,1]
-    #get quantum yield!
-    QY[i] = fc[int(ifp)]['spectra'][1]['qy']
+    #get quantum yield
+        QY[i] = fc[int(ifp)]['spectra'][1]['qy']
     # os.remove('FPs.wget') #delete the downloaded FP file 
-    return(EX_EM,QY, lambdas)
+        return(EX_EM,QY, lambdas)
 
 
 #function for retriving camera QEs
