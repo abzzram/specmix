@@ -251,5 +251,5 @@ def get_spectra(FPs, paths, laser_lines):
     #load beam splitter 
     beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
     #assemble dict
-    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY}
+    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
     return(specdata)
