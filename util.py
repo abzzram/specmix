@@ -63,7 +63,7 @@ def get_FP_spectra(FPs):
     #get quantum yield
         QY[i] = fc[int(ifp)]['spectra'][1]['qy']
     # os.remove('FPs.wget') #delete the downloaded FP file 
-        return(EX_EM,QY, lambdas)
+    return(EX_EM,QY, lambdas)
 
 
 #function for retriving camera QEs
@@ -126,7 +126,6 @@ def get_QEs(Lambdas, bsi_path, ixon_path):
     # QE_cameras[:,1] = y
     # return QE_cameras
     for icam in range(2):
-        print(icam)
         y = QE_cameras[:,icam]
         nans, x= nan_helper(y)
         y[nans]= np.interp(x(nans), x(~nans), y[~nans])
