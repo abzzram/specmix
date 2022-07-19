@@ -15,40 +15,70 @@ def populate_matrix(specdata, exc_lines, em_filters, laser_powers, exposure_time
     # Empty 2 x 2 x 4 array
     FPs = specdata['FPs'] #get FP names
     c_3d = np.zeros((len(exc_lines), len(em_filters), len(FPs)))
+
+    #assembled paired laser lines
+    paired_lasers = np.zeros((len(specdata['Lambdas']),len(exc_lines)))
+    adjusted_lasers = specdata['lasers'] * laser_powers
+    # plt.pyplot.plot(specdata['Lambdas'],adjusted_lasers.iloc[:,1])
+    # plt.pyplot.show()
+    # pdb.set_trace()
+    #remove duplicate laser lines
+    adjusted_lasers = adjusted_lasers.loc[:,~adjusted_lasers.columns.duplicated()].copy()
+
+    paired_lasers[:,0] = adjusted_lasers.loc[:,exc_lines[0]].sum(1) #add the frist laser pair into one array
+    paired_lasers[:,1] = adjusted_lasers.loc[:,exc_lines[1]].sum(1) #add the second laser pair into one array
+    # plt.pyplot.plot(specdata['Lambdas'],paired_lasers[:,0])
+    # plt.pyplot.show()
     # Loop through the entries and populate
     for m, exc_line in enumerate(exc_lines):
         for mp, em_filter in enumerate(em_filters):
             for n, FP in enumerate(FPs):
                 # Collect excitation terms
-                laser_spec =  np.array(specdata['lasers'])[:,m]
-                # dichroic_in = 1- np.array(specdata['dichroic'])[:,1]
+                # laser_spec =  np.array(specdata['lasers'])[:,m]
+                laser_spec = np.array(paired_lasers[:,m])
                 abs_spec = np.array(specdata['EX_EM'][0,n])
-                pdb.set_trace()
-                laser_power = laser_powers[m]
-                exc_part = np.sum(laser_spec * laser_power *  abs_spec) # Collect excitation bits and sum/integrate
+                exc_part = np.sum(laser_spec  *  abs_spec) # Collect excitation bits and sum/integrate
                 # Collect emission terms
-                em_spec = np.array(specdata['EX_EM'][0,n])
+                em_spec = np.array(specdata['EX_EM'][1,n])
                 beam_split_trans = np.array(specdata['beam_split'])[:,mp] #not sure which cameras gets which beam yet
                 filter_em = np.array(specdata['filter_trans'])[:,mp]
                 Quan_eff = np.array(specdata['QE_cameras'])[:,mp] #make sure this is correct camera order 
+                dichroic_trans = np.array(specdata['dichroic'])[:,1]
                 #constants
                 Quan_yield = np.array(specdata['QY'])[n]
                 t_exp = np.array(exposure_times)[m]
-                em_part = np.sum(em_spec * beam_split_trans * filter_em * Quan_eff * Quan_yield * t_exp)# Collect emission bits and sum/integrate
-                # # plt.pyplot.plot(specdata['Lambdas'],em_part)
-                # # plt.pyplot.show()
+                em_part = np.sum(em_spec * beam_split_trans * filter_em * Quan_eff * Quan_yield * t_exp * dichroic_trans)# Collect emission bits and sum/integrate
+                # em = (em_spec * beam_split_trans * filter_em * Quan_eff * Quan_yield * t_exp * dichroic_trans)
+                # plt.pyplot.plot(specdata['Lambdas'],em)
+                # plt.pyplot.show()
 
-                # # plt.pyplot.plot(specdata['Lambdas'],laser_spec)
+                # plt.pyplot.plot(specdata['Lambdas'],laser_spec)
                 # # plt.pyplot.plot(specdata['Lambdas'],dichroic_in)
-                # # plt.pyplot.plot(specdata['Lambdas'],abs_spec)
-                # # plt.pyplot.show()
-
-                # plt.pyplot.plot(specdata['Lambdas'],em_spec)
-                # plt.pyplot.plot(specdata['Lambdas'],beam_split_trans)
-                # plt.pyplot.plot(specdata['Lambdas'],filter_em)
-                # plt.pyplot.show()       
-                # pdb.set_trace()         
+                # plt.pyplot.plot(specdata['Lambdas'],abs_spec)
+                # plt.pyplot.show()
+                # if n ==3 and m ==1 and mp ==1:
+                #     plt.pyplot.plot(specdata['Lambdas'],laser_spec)
+                #     plt.pyplot.plot(specdata['Lambdas'],abs_spec)
+                #     # ex_spec2 = np.array(specdata['EX_EM'][0,1])#
+                #     # plt.pyplot.plot(specdata['Lambdas'],ex_spec2)
+                #     plt.pyplot.legend(('laser line','excitation spec'),loc='center left', bbox_to_anchor=(0, 1.1), ncol=3)
+                #     plt.pyplot.xlabel('Wavelength')
+                #     plt.pyplot.ylabel('Tramsmission') 
+                #     plt.pyplot.show()                   
+                #     # em_spec2 = np.array(specdata['EX_EM'][1,1])#
+                #     plt.pyplot.plot(specdata['Lambdas'],em_spec)
+                #     plt.pyplot.plot(specdata['Lambdas'],beam_split_trans)
+                #     plt.pyplot.plot(specdata['Lambdas'],filter_em)
+                #     # plt.pyplot.plot(specdata['Lambdas'],Quan_eff)
+                #     plt.pyplot.plot(specdata['Lambdas'],dichroic_trans)
+                #     # plt.pyplot.plot(specdata['Lambdas'],em_spec2)
+                #     plt.pyplot.legend(('em','beam_splitter','filter','dichroic'),loc='center left', bbox_to_anchor=(0, 1.1),ncol=3)
+                #     plt.pyplot.xlabel('Wavelength')
+                #     plt.pyplot.ylabel('Tramsmission')
+                #     plt.pyplot.show()       
+                #     pdb.set_trace()         
                 c_3d[m,mp,n] = exc_part * em_part
+                print('c3d is:',c_3d[m,mp,n])
 
     # Collapse over first two dimensions
     c_2d = np.reshape(c_3d, (c_3d.shape[0]*c_3d.shape[1], c_3d.shape[2]))

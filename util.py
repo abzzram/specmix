@@ -236,13 +236,17 @@ def get_spectra(FPs, paths, laser_lines):
     # FPs: list of flourescent proteins in experiment
     # paths: output of get_filepaths function
     #lines lines, waveslengths of lasers used (ie 405)
-    #example:
+    #outputs Exicitation and Emmission for FPs (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
+    #lasers will have a combined wavelength by lasers excitation data for the each pair inputted lasers
 
     EX_EM, QY, Lambdas = get_FP_spectra(FPs) #get spectra
     QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
     #load saved laser lines
     all_lasers = pd.read_csv(paths['laser_file'])
-    lasers = all_lasers.loc[:, laser_lines]
+    # lasers = np.zeros((len(all_lasers),len(laser_lines)))
+    lasers = all_lasers.loc[:, laser_lines[0]+ laser_lines[1]]
+    # lasers[0] = all_lasers.loc[:,laser_lines[0]].sum(1) #add the frist laser pair into one array
+    # lasers[1] = all_lasers.loc[:,laser_lines[1]].sum(1) #add the second laser pair into one array
     #load dichoric
     dichroic = pd.read_csv(paths['dichroic_file'])
 
