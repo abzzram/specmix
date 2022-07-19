@@ -54,12 +54,14 @@ def get_FP_spectra(FPs):
     for i,ifp in enumerate(FP_inds):
         lambda_ex = np.array(fc[int(ifp)]['spectra'][0]['data']) # n by 2 array of wavelengths and data
         for n, ilambda in enumerate(lambda_ex):
-            j = np.argwhere(lambdas == ilambda[0])[0][0] #find index of ex wavelength containedin databse
-            EX_EM[0,i,j]  = lambda_ex[n,1]
+            if (lambdas == ilambda[0]).any(): #skip wavelengths that aren't shared 
+                jj = np.argwhere(lambdas == ilambda[0])[0][0] #find index of ex wavelength containedin databse
+                EX_EM[0,i,jj]  = lambda_ex[n,1]
         lambda_em = np.array(fc[int(ifp)]['spectra'][1]['data']) # n by 2 array of em wavelengths and data
         for n2, ilambda2 in enumerate(lambda_em):
-            j = np.argwhere(lambdas == ilambda2[0])[0][0] #find index of ex wavelength containedin databse
-            EX_EM[1,i,j]  = lambda_em[n2,1]
+            if (lambdas == ilambda2[0]).any(): #skip wavelengths that aren't shared 
+                jj = np.argwhere(lambdas == ilambda2[0])[0][0] #find index of ex wavelength containedin databse
+                EX_EM[1,i,jj]  = lambda_em[n2,1]
     #get quantum yield
         QY[i] = fc[int(ifp)]['spectra'][1]['qy']
     # os.remove('FPs.wget') #delete the downloaded FP file 
@@ -243,10 +245,8 @@ def get_spectra(FPs, paths, laser_lines):
     QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
     #load saved laser lines
     all_lasers = pd.read_csv(paths['laser_file'])
-    # lasers = np.zeros((len(all_lasers),len(laser_lines)))
     lasers = all_lasers.loc[:, laser_lines[0]+ laser_lines[1]]
-    # lasers[0] = all_lasers.loc[:,laser_lines[0]].sum(1) #add the frist laser pair into one array
-    # lasers[1] = all_lasers.loc[:,laser_lines[1]].sum(1) #add the second laser pair into one array
+
     #load dichoric
     dichroic = pd.read_csv(paths['dichroic_file'])
 
