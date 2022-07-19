@@ -228,7 +228,9 @@ def get_filepaths(datafolder, **filters):
     else:
         # filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
         print('using default fitlers...', filters)
-        filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
+        # filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
+        filters = [['TR-DFLY-F450-050','TR-DFLY-F521-038'],['TR-DFLY-F600-050','TR-DFLY-F698-077']] #input filter names (paired filter for each camera)  
+
     bs = ['TR-DFLY-CMDM-565'] #name of beam spliter 
     paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
     return(paths)
