@@ -148,22 +148,17 @@ def get_em_filters(filter_folder, filters, wavelengths):
 # filter_trans = get_em_filters(filter_folder, filters, Lambdas)
 # plt.plot(Lambdas, filter_trans[:,1]) 
     
-#     parts = glob.glob((filter_folder + '*.txt'))#list names in the filters folder 
-    filter_trans = np.zeros((len(wavelengths),len(filters))) #initialize filters 
+    all_filters = filters[0] + filters[1] #convert to list
+    filter_trans = np.zeros((len(wavelengths),len(all_filters))) #initialize filters 
     colnames = ['Wavelength','Transmission']
-
     #loop through filters to assemle filter transmission 
-    for i, iname in enumerate(filters):
+    for i, iname in enumerate(all_filters):
         fname = filter_folder + iname + '.txt'#assemble file name 
         cur_filt = pd.read_csv((fname),delimiter='\t', skiprows=0,names=colnames)
         for iwvl,wvl in enumerate(wavelengths):
-    #         print(wvl)
-    #         print(cur_filt.iloc[iwvl,:])
             wvl_index = cur_filt.loc[cur_filt['Wavelength']== wvl].index.values #get index of wvl in filter data
-    #         print(wvl, wvl_index)
         #if wavelengt is found, save the values
             if len(wvl_index)> 0: 
-    #             print(wvl)
                 filter_trans[iwvl,i] = cur_filt.iloc[wvl_index,1]#get values
         #521 filter has missing values, fill those in 
         if iname == 'TR-DFLY-F521-038':
@@ -231,10 +226,9 @@ def get_filepaths(datafolder, **filters):
         print('using requested filters...',filters)
         filters = filters['filters']
     else:
+        # filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
         print('using default fitlers...', filters)
-        filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
-        print('using default fitlers...', filters)
-        # filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
+        filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
     bs = ['TR-DFLY-CMDM-565'] #name of beam spliter 
     paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
     return(paths)
@@ -263,5 +257,5 @@ def get_spectra(FPs, paths, laser_lines):
     #load beam splitter 
     beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
     #assemble dict
-    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
+    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filters":paths['filters'],"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
     return(specdata)
