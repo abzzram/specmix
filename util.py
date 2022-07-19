@@ -214,9 +214,10 @@ def get_beam_spliiter(bs_folder, bs, wavelengths):
     return(beam_split)
 
 ##function for retrieving default file paths
-def get_filepaths(datafolder):
+def get_filepaths(datafolder, **filters):
     #assemble paths names of parts in Dragonfly_tramsission_spectra folder
     #input: location of folder where Dragonfly_transmission_spectra folder lives
+    #optional input: non default filters (default: ) 
     #assemble name of filters and beam spliter
     #returns dictionary of paths and names of default filters
     #FIX ME, optional input where you can change filter names 
@@ -226,7 +227,14 @@ def get_filepaths(datafolder):
     dichroic_file = datafolder + 'Drangonfly_transmission_spectra/Quad_pass_filter/Dichroic_transmission.csv'
     filter_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
     bs_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
-    filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
+    if filters:
+        print('using requested filters...',filters)
+        filters = filters['filters']
+    else:
+        print('using default fitlers...', filters)
+        filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
+        print('using default fitlers...', filters)
+        # filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
     bs = ['TR-DFLY-CMDM-565'] #name of beam spliter 
     paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
     return(paths)
