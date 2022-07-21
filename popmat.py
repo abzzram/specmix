@@ -85,6 +85,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
                     axis2.set_ylabel('Tramsmission')
                 print(exc_line, em_filter, FP,cameras[mp], c_3d[m,mp,n])   
                 axis1.set_title(FP + ' laser: ' + exc_line[mp] + '. ' + em_filter[m] + '\n' + cameras[mp] ,fontsize=8)      
+                axis2.set_title(FP + ' laser: ' + exc_line[mp],fontsize=8)      
 
     # Collapse over first two dimensions
     fig1.tight_layout()
