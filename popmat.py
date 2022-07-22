@@ -18,8 +18,8 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
 
     #assembled paired laser lines
     paired_lasers = np.zeros((len(specdata['Lambdas']),len(exc_lines)))
-    adjusted_lasers = specdata['lasers'] * laser_powers
-
+    # adjusted_lasers = specdata['lasers'] * laser_powers
+    adjusted_lasers = specdata['lasers'] * laser_powers / specdata['laser_widths']
     #remove duplicate laser lines,
     adjusted_lasers = adjusted_lasers.loc[:,~adjusted_lasers.columns.duplicated()].copy()
     paired_lasers[:,0] = adjusted_lasers.loc[:,exc_lines[0]].sum(1) #add the frist laser pair into one array
@@ -28,6 +28,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
     #assemble paired filters 
     #initalize wavelength by filter pair by 2 (# of pairs) matrix to store fitler transmission, and assemble filter pairs
     paired_filters =  np.zeros((len(specdata['Lambdas']),len(specdata['filters']),len(specdata['filters'])))
+    #is there a better way to do the following? 
     paired_filters[:,[0,1],[0]] = specdata['filter_trans'][:,[0,1]]
     paired_filters[:,[0,1],[1]] = specdata['filter_trans'][:,[2,3]]
     cameras = ['BSI','Andor'] 
@@ -96,5 +97,6 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
     fig2.savefig('./example_output_ex.pdf', bbox_inches=None, dpi=300,facecolor='white')
     plt.pyplot.show()
     c_2d = np.reshape(c_3d, (c_3d.shape[0]*c_3d.shape[1], c_3d.shape[2]))
-    
+    np.set_printoptions(suppress=True)
+    print('Unmixing matrix: \n',c_2d)
     return c_2d
