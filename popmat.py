@@ -33,7 +33,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
     cameras = ['BSI','Andor'] 
     # plt.pyplot.plot(specdata['Lambdas'],paired_filters[:,0])
     k=0
-    nRows = nCols = 4
+    nRows = nCols = len(FPs)
     dayRowCol = np.array([i + 1 for i in range(nRows * nCols)]).reshape(nRows, nCols)
     fig1, ax1 = plt.pyplot.subplots(nrows=nRows,ncols=nCols,figsize=(20,8))
     fig2, ax2 = plt.pyplot.subplots(nrows=nRows,ncols=nCols,figsize=(20,8))
@@ -84,17 +84,16 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
                     axis1.set_ylabel('Tramsmission')
                     axis2.set_ylabel('Tramsmission')
                 print(exc_line, em_filter, FP,cameras[mp], c_3d[m,mp,n])   
-                axis1.set_title(FP + ' laser: ' + exc_line[mp] + '. ' + em_filter[m] + '\n' + cameras[mp] ,fontsize=8)      
-                axis2.set_title(FP + ' laser: ' + exc_line[mp],fontsize=8)      
+                axis1.set_title(FP + ' emission.' + '\n'  + 'Filter: ' + em_filter[m] + ' Camera: ' + cameras[mp] ,fontsize=8)      
+                axis2.set_title(FP + ' excitation. Lasers: ' +  (' | '.join(exc_line) ),fontsize=8)      
 
     # Collapse over first two dimensions
     fig1.tight_layout()
     fig2.tight_layout()
-    # plt.pyplot.set_suptitle('Theoretical emission captured by Dragonfly', y = 1) 
     fig1.suptitle('Theoretical emission captured by Dragonfly', y = 1) 
     fig2.suptitle('Theoretical excitation spectra/laser lines', y = 1) 
-    fig1.savefig('./example_output_ex.pdf', bbox_inches=None, dpi=300,facecolor='white')
-    fig2.savefig('./example_output_em.pdf', bbox_inches=None, dpi=300,facecolor='white')
+    fig1.savefig('./example_output_em.pdf', bbox_inches=None, dpi=300,facecolor='white')
+    fig2.savefig('./example_output_ex.pdf', bbox_inches=None, dpi=300,facecolor='white')
     plt.pyplot.show()
     c_2d = np.reshape(c_3d, (c_3d.shape[0]*c_3d.shape[1], c_3d.shape[2]))
     
