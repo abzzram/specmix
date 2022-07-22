@@ -219,6 +219,7 @@ def get_filepaths(datafolder, **filters):
     bsi_path =  datafolder + 'Drangonfly_transmission_spectra/BSI_Prime_Express/BSI_Prime_Express_QE.csv'
     ixon_path = datafolder + 'Drangonfly_transmission_spectra/iXonCamera/IXON-L-888 Sensor QE.csv'
     laser_file = datafolder + 'Drangonfly_transmission_spectra/Lasers/Laser_lines.csv'
+    laser_widths = datafolder +  'Drangonfly_transmission_spectra/Lasers/Andor ILE lasers - Sheet1.csv'
     dichroic_file = datafolder + 'Drangonfly_transmission_spectra/Quad_pass_filter/Dichroic_transmission.csv'
     filter_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
     bs_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
@@ -230,7 +231,7 @@ def get_filepaths(datafolder, **filters):
         filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
 
     bs = ['TR-DFLY-CMDM-565'] #name of beam spliter 
-    paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
+    paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "laser_widths":laser_widths, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
     return(paths)
 
 #function for retreiving all data together in a list
@@ -247,7 +248,24 @@ def get_spectra(FPs, paths, laser_lines):
     QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
     #load saved laser lines
     all_lasers = pd.read_csv(paths['laser_file'])
-    lasers = all_lasers.loc[:, laser_lines[0]+ laser_lines[1]]
+    
+    lasers = all_lasers.loc[:, laser_lines[0]+ laser_lines[1]] #should this be changed to not hard code adding the first two? what you we had three pairs?
+    #load laser widths 
+    #count the number of total lasers, sorry I didn't know how to easily do this :( 
+    n_lasers = 0
+    for laser_pair in laser_lines:
+        for laser in laser_pair:
+            n_lasers  = n_lasers + 1
+
+    laser_widths_csv = pd.read_csv(paths['laser_widths'])
+    laser_widths = np.zeros((1,n_lasers))
+    ind = -1
+    for laser_pair in laser_lines:
+        for laser in laser_pair:
+            ind = ind + 1
+            laser_index = np.argwhere(laser_widths_csv['Wavelength'].values == int(laser)) #get index of laser
+            laser_widths[:,ind] = laser_widths_csv['Width (+-)'].iloc[int(laser_index)]
+
 
     #load dichoric
     dichroic = pd.read_csv(paths['dichroic_file'])
@@ -257,5 +275,5 @@ def get_spectra(FPs, paths, laser_lines):
     #load beam splitter 
     beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
     #assemble dict
-    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"dichroic":dichroic,"filters":paths['filters'],"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
+    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"laser_widths":laser_widths,"dichroic":dichroic,"filters":paths['filters'],"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
     return(specdata)
