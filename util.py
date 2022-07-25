@@ -112,21 +112,10 @@ def get_QEs(Lambdas, bsi_path, ixon_path):
         wvl_index2 = iXon.loc[iXon['Wavelength (nm)']== wvl].index.values #get index of wvl in QE curve 
         #if wavelengt is found, save the QE values
         if len(wvl_index)> 0:
-            QE_cameras[i,0] = BSI.iloc[int(wvl_index),1]#get QE for BSI
+            QE_cameras[i,1] = BSI.iloc[int(wvl_index),1]#get QE for BSI. This will be in second col
         if len(wvl_index2)> 0:
-            QE_cameras[i,1] = iXon.iloc[int(wvl_index2),1]#get QE for iXon
+            QE_cameras[i,0] = iXon.iloc[int(wvl_index2),1]#get QE for iXon. This will be in first col
     #interpolate nans
-    # import pdb; pdb.set_trace()
-    # y = QE_cameras[:,0]
-    # nans, x= nan_helper(y)
-    # y[nans]= np.interp(x(nans), x(~nans), y[~nans])
-    # QE_cameras[:,0] = y
-    # #interpolate nans
-    # y = QE_cameras[:,1]
-    # nans, x= nan_helper(y)
-    # y[nans]= np.interp(x(nans), x(~nans), y[~nans])
-    # QE_cameras[:,1] = y
-    # return QE_cameras
     for icam in range(2):
         y = QE_cameras[:,icam]
         nans, x= nan_helper(y)
