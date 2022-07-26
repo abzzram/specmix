@@ -70,7 +70,8 @@ def get_FP_spectra(FPs):
 
 #function for retriving camera QEs
 #put it all into a function
-def get_QEs(Lambdas, bsi_path, ixon_path):
+def get_QEs(Lambdas, cam1path, cam2path,cameras):
+# def get_QEs(Lambdas, bsi_path, ixon_path):
     #Retreive quantum efficiency of the BSI Prime Express and iXon cameras
     #inputs: wavelengths corresponding to QE needed (should be the same as all other spectra data )
     #output, wavelength by 2 array of QEs for BSI (col 0) and iXon (col 1)
@@ -95,26 +96,43 @@ def get_QEs(Lambdas, bsi_path, ixon_path):
         return np.isnan(y), lambda z: z.nonzero()[0]
     
     #retrive camera quantum efficiency data
-    BSI = pd.read_csv(bsi_path)
-    iXon = pd.read_csv(ixon_path)
+    # BSI = pd.read_csv(bsi_path)
+    # iXon = pd.read_csv(ixon_path)
+    cam1 = pd.read_csv(cam1path)
+    cam2 = pd.read_csv(cam2path)    
     #round the QE wavelengths for BSI data. (names of columns are as they were when downloaded)
-    BSI.BSI_New = BSI.BSI_New.round(0)
-    #turn into percetages 
-    BSI.QE = BSI.QE / 100
-    iXon['IXON-L-888 Sensor QE'] = iXon['IXON-L-888 Sensor QE'] / 100
+    if cameras[0] == 'BSI_Prime_Express':
+        cam1.BSI_New = cam1.BSI_New.round(0)
+        #turn into percetages 
+        cam1.QE = cam1.QE / 100
+    if cameras[1] == 'BSI_Prime_Express':
+        cam2.BSI_New = cam2.BSI_New.round(0)
+        #turn into percetages 
+        cam2.QE = cam2.QE / 100
+    if cameras[0] == 'Andor_iXon':
+        cam1['IXON-L-888 Sensor QE'] = cam1['IXON-L-888 Sensor QE'] / 100
+    if cameras[1] == 'Andor_iXon':
+        cam2['IXON-L-888 Sensor QE'] = cam2['IXON-L-888 Sensor QE'] / 100        
 
     #for each wavelength in lamdas, find the QE value for the camera 
-    QE_cameras = np.empty((len(Lambdas),2)) #initialize QE for both cameraize, lambda by 2 (one col per camera)
+    QE_cameras = np.empty((len(Lambdas),len(cameras))) #initialize QE for both cameraize, lambda by 2 (one col per camera)
     QE_cameras[:] = np.nan
     #loop through wavelength in Lambdas
     for i,wvl in enumerate(Lambdas):
-        wvl_index = BSI.loc[BSI['BSI_New']== wvl].index.values #get index of wvl in QE curve 
-        wvl_index2 = iXon.loc[iXon['Wavelength (nm)']== wvl].index.values #get index of wvl in QE curve 
+        #chekc which cameras are requested
+        if cameras[0] == 'BSI_Prime_Express':
+            wvl_index = cam1.loc[cam1['BSI_New']== wvl].index.values #get index of wvl in QE curve 
+        if cameras[1] == 'BSI_Prime_Express':
+            wvl_index2 = cam2.loc[cam2['BSI_New']== wvl].index.values #get index of wvl in QE curve 
+        if cameras[0] == 'Andor_iXon':
+            wvl_index = cam1.loc[cam1['Wavelength (nm)']== wvl].index.values #get index of wvl in QE curve 
+        if cameras[1] == 'Andor_iXon':
+            wvl_index2 = cam2.loc[cam2['Wavelength (nm)']== wvl].index.values #get index of wvl in QE curve 
         #if wavelengt is found, save the QE values
         if len(wvl_index)> 0:
-            QE_cameras[i,1] = BSI.iloc[int(wvl_index),1]#get QE for BSI. This will be in second col
+            QE_cameras[i,0] = cam1.iloc[int(wvl_index),1]#get QE for BSI. This will be in second col
         if len(wvl_index2)> 0:
-            QE_cameras[i,0] = iXon.iloc[int(wvl_index2),1]#get QE for iXon. This will be in first col
+            QE_cameras[i,1] = cam2.iloc[int(wvl_index2),1]#get QE for iXon. This will be in first col
     #interpolate nans
     for icam in range(2):
         y = QE_cameras[:,icam]
@@ -198,13 +216,14 @@ def get_beam_spliiter(bs_folder, bs, wavelengths):
     return(beam_split)
 
 ##function for retrieving default file paths
-def get_filepaths(datafolder, **filters):
+def get_filepaths(datafolder, **kwargs):
     #assemble paths names of parts in Dragonfly_tramsission_spectra folder
     #input: location of folder where Dragonfly_transmission_spectra folder lives
-    #optional input: non default filters (default: ) 
+    #optional inputs: non default filters (default: [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] 
+        #filters must be defined as they are in filters folder in Dragonfly Transmission Spectra/Data/semrock_filters_bs folder
+        #or non default cameras( default: )
     #assemble name of filters and beam spliter
     #returns dictionary of paths and names of default filters
-    #FIX ME, optional input where you can change filter names 
     bsi_path =  datafolder + 'Drangonfly_transmission_spectra/BSI_Prime_Express/BSI_Prime_Express_QE.csv'
     ixon_path = datafolder + 'Drangonfly_transmission_spectra/iXonCamera/IXON-L-888 Sensor QE.csv'
     laser_file = datafolder + 'Drangonfly_transmission_spectra/Lasers/Laser_lines.csv'
@@ -212,15 +231,42 @@ def get_filepaths(datafolder, **filters):
     dichroic_file = datafolder + 'Drangonfly_transmission_spectra/Quad_pass_filter/Dichroic_transmission.csv'
     filter_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
     bs_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
-    if filters:
-        print('using requested filters...',filters)
-        filters = filters['filters']
-    else:
-        print('using default fitlers...', filters)
-        filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
 
-    bs = ['TR-DFLY-CMDM-565'] #name of beam spliter 
-    paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "laser_widths":laser_widths, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
+    bs = ['TR-DFLY-CMDM-565'] #name of beam spliter
+    if kwargs['filters']:
+        print('using requested filters...',kwargs['filters'])
+        filters = kwargs['filters']
+    else:
+        print('using default fitlers...', [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']])
+        filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
+    if kwargs['cameras']: 
+        cameras = kwargs['cameras']
+        print('using requested cameras...')
+        default_cams = ['Andor_iXon','BSI_Prime_Express']
+        cam1 = kwargs['cameras'][0]
+        cam2 = kwargs['cameras'][1]
+        if cam1 == default_cams[0]:
+            cam1_path = ixon_path
+        elif cam1 == default_cams[1]:
+            cam1_path = bsi_path
+        else:
+            print('Specficied camera1 not found, try: Andor_iXon (or) BSI_Prime_Express')
+        if cam2 == default_cams[0]:
+            cam2_path = ixon_path
+        elif cam1 == default_cams[1]:
+            cam2_path = bsi_path
+        else:
+            print('Specficied camera2 not found, try: Andor_iXon (or) BSI_Prime_Express')
+
+    else:
+        print('using default cameras (Andor iXon | BSI Prime Express ')
+        cam1_path = ixon_path 
+        cam2_path = bsi_path
+        cameras = ['Andor_iXon','BSI_Prime_Express']
+    # cam1_path =
+    # cam2_path =  
+    paths = {"cameras":cameras,"cam1_path":cam1_path, "cam2_path":cam2_path,"laser_file":laser_file, "laser_widths":laser_widths, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
+    # paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "laser_widths":laser_widths, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
     return(paths)
 
 #function for retreiving all data together in a list
@@ -234,7 +280,8 @@ def get_spectra(FPs, paths, laser_lines):
     #lasers will have a combined wavelength by lasers excitation data for the each pair inputted lasers
 
     EX_EM, QY, Lambdas = get_FP_spectra(FPs) #get spectra
-    QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
+    # QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
+    QE_cameras = get_QEs(Lambdas,paths['cam1_path'],paths['cam2_path'],paths['cameras']) #get camera QE
     #load saved laser lines
     all_lasers = pd.read_csv(paths['laser_file'])
     
@@ -264,5 +311,5 @@ def get_spectra(FPs, paths, laser_lines):
     #load beam splitter 
     beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
     #assemble dict
-    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"QE_cameras":QE_cameras,"lasers":lasers,"laser_widths":laser_widths,"dichroic":dichroic,"filters":paths['filters'],"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
+    specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"cameras":paths['cameras'],"QE_cameras":QE_cameras,"lasers":lasers,"laser_widths":laser_widths,"dichroic":dichroic,"filters":paths['filters'],"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
     return(specdata)

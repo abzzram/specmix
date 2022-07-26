@@ -31,7 +31,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
     #is there a better way to do the following? 
     paired_filters[:,[0,1],[0]] = specdata['filter_trans'][:,[0,1]]
     paired_filters[:,[0,1],[1]] = specdata['filter_trans'][:,[2,3]]
-    cameras = ['Andor','BSI'] 
+    cameras = specdata['cameras']
     # plt.pyplot.plot(specdata['Lambdas'],paired_filters[:,0])
     k=0
     nRows = nCols = len(FPs)
