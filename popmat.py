@@ -2,17 +2,19 @@ import numpy as np
 import pdb
 import matplotlib as plt
 
-def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
+def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     # Input: a dictionary of spectral data
-    # Input: 
     # Output: a numpy array with our spectral mixing model,
-
+    #optional input:
+        #'beamsplitter = 'none'
+            #this is for when no beamsplitter was used 
     # Generate empty matrix c_m,m',n
     # For example:
     # 2 exc lines
     # 2 em filters
     # 4 FPS
     # Empty 2 x 2 x 4 array
+
     FPs = specdata['FPs'] #get FP names
     c_3d = np.zeros((len(exc_lines), len(specdata['filters']), len(FPs)))
 
@@ -32,7 +34,9 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times):
     paired_filters[:,[0,1],[0]] = specdata['filter_trans'][:,[0,1]]
     paired_filters[:,[0,1],[1]] = specdata['filter_trans'][:,[2,3]]
     cameras = specdata['cameras']
-    # plt.pyplot.plot(specdata['Lambdas'],paired_filters[:,0])
+    #if beam splitter is set to none, change values to 1 
+    if kwargs['beamsplitter'] == 'none':
+        specdata['beam_split'][:,:] = 1
     k=0
     nRows = nCols = len(FPs)
     dayRowCol = np.array([i + 1 for i in range(nRows * nCols)]).reshape(nRows, nCols)
