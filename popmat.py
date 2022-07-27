@@ -13,7 +13,8 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     # Empty 2 x 2 x 4 array
 
     FPs = specdata['FPs'] #get FP names
-    c_3d = np.zeros((len(exc_lines), len(specdata['filters']), len(FPs)))
+    cameras = specdata['cameras']
+    # c_3d = np.zeros((len(exc_lines), len(specdata['filters']), len(FPs)))
 
     #assembled paired laser lines
     paired_lasers = np.zeros((len(specdata['Lambdas']),len(exc_lines)))
@@ -29,7 +30,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     count = [] #count the numbers of filters in each pair so we can initialize correct matrix
     for filt in specdata['filters']:
         count.append(len(filt)) 
-    paired_filters =  np.zeros((len(specdata['Lambdas']),np.max(count),len(specdata['filters'])))
+    paired_filters =  np.zeros((len(specdata['Lambdas']),np.max(count),len(specdata['filters']))) #check this line
     #fill in paired filter matrix 
     j = -1
     for ipair, pairs in enumerate(specdata['filters']):
@@ -37,38 +38,39 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
             j=j+1
             paired_filters[:,[ifilt],[ipair]] = specdata['filter_trans'][:,[j]]
 
-    # paired_filters[:,[0,1],[0]] = specdata['filter_trans'][:,[0,1]]
-    # paired_filters[:,[0,1],[1]] = specdata['filter_trans'][:,[2,3]]
-    cameras = specdata['cameras']
 
     k=0
     nRows = nCols = len(FPs)
     dayRowCol = np.array([i + 1 for i in range(nRows * nCols)]).reshape(nRows, nCols)
     fig1, ax1 = plt.pyplot.subplots(nrows=nRows,ncols=nCols,figsize=(20,8))
     fig2, ax2 = plt.pyplot.subplots(nrows=nRows,ncols=nCols,figsize=(20,8))
+    #initialize c_3d
+    c_3d = np.empty((len(exc_lines),np.max(count),len(FPs)))
+    c_3d[:] = np.NaN
     for m, exc_line in enumerate(exc_lines):
-        for mp, em_filter in enumerate(specdata['filters']):
-            for n, FP in enumerate(FPs):
+        for mp, em_filter in enumerate(specdata['filters'][m]):
+            for nFP, FP in enumerate(FPs):
                 k = k+1 #for subplots
                 rowIdx, colIdx = np.argwhere(dayRowCol == k)[0]
                 # Collect excitation terms
                 laser_spec = np.array(paired_lasers[:,m])
-                abs_spec = np.array(specdata['EX_EM'][0,n])
+                abs_spec = np.array(specdata['EX_EM'][0,nFP])
                 ex_prod = (laser_spec  *  abs_spec)
                 exc_part = np.sum(laser_spec  *  abs_spec) # Collect excitation bits and sum/integrate
                 # Collect emission terms
-                em_spec = np.array(specdata['EX_EM'][1,n])
+                em_spec = np.array(specdata['EX_EM'][1,nFP])
                 beam_split_trans = np.array(specdata['beam_split'])[:,mp] #not sure which cameras gets which beam yet
-                filter_em = np.array(paired_filters)[:,mp,m]
+                filter_em = np.array(paired_filters)[:,mp,m]#correct
+                # filter_em = np.array(paired_filters)[:,mp,mp]#
+
                 Quan_eff = np.array(specdata['QE_cameras'])[:,mp] #make sure this is correct camera order 
                 dichroic_trans = np.array(specdata['dichroic'])[:,1]
                 #constants
-                Quan_yield = np.array(specdata['QY'])[n]
+                Quan_yield = np.array(specdata['QY'])[nFP]
                 t_exp = np.array(exposure_times)[m]
                 em_part = np.sum(em_spec * beam_split_trans * filter_em * Quan_eff * Quan_yield * t_exp * dichroic_trans)# Collect emission bits and sum/integrate
                 em_prod = (em_spec * beam_split_trans * filter_em * Quan_eff *  dichroic_trans) #for visualization
-                c_3d[m,mp,n] = exc_part * em_part
-
+                c_3d[m,mp,nFP] = exc_part * em_part
                 #plot ex spectra
                 axis2 = ax2[rowIdx, colIdx]
                 axis2.plot(specdata['Lambdas'],laser_spec)
@@ -92,8 +94,8 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 if k%4 ==1:
                     axis1.set_ylabel('Tramsmission')
                     axis2.set_ylabel('Tramsmission')
-                print(exc_line, em_filter, FP,cameras[mp], c_3d[m,mp,n])   
-                axis1.set_title(FP + ' emission.' + '\n'  + 'Filter: ' + em_filter[m] + ' Camera: ' + cameras[mp] ,fontsize=8)      
+                print(exc_line, em_filter, FP,cameras[mp], c_3d[m,mp,nFP])   
+                axis1.set_title(FP + ' emission.' + '\n'  + 'Filter: ' + em_filter + ' Camera: ' + cameras[mp] ,fontsize=8)      
                 axis2.set_title(FP + ' excitation. Lasers: ' +  (' | '.join(exc_line) ),fontsize=8)      
 
     # Collapse over first two dimensions
@@ -106,5 +108,9 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     plt.pyplot.show()
     c_2d = np.reshape(c_3d, (c_3d.shape[0]*c_3d.shape[1], c_3d.shape[2]))
     np.set_printoptions(suppress=True)
+    #get rid of nans in umixing matrix, this happends when each camera has different number of laser lines
+    if np.isnan(c_2d).any():
+        print('...\n...\n Warning: number of excitation lines are different for each camera. Removing NaN rows from unmixing matrix \n...\n...\n')
+        c_2d = c_2d[~np.isnan(c_2d).any(axis=1)]
     print('Unmixing matrix: \n',c_2d)
     return c_2d
