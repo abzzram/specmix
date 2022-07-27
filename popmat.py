@@ -5,9 +5,6 @@ import matplotlib as plt
 def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     # Input: a dictionary of spectral data
     # Output: a numpy array with our spectral mixing model,
-    #optional input:
-        #'beamsplitter = 'none'
-            #this is for when no beamsplitter was used 
     # Generate empty matrix c_m,m',n
     # For example:
     # 2 exc lines
@@ -29,14 +26,21 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
 
     #assemble paired filters 
     #initalize wavelength by filter pair by 2 (# of pairs) matrix to store fitler transmission, and assemble filter pairs
-    paired_filters =  np.zeros((len(specdata['Lambdas']),len(specdata['filters']),len(specdata['filters'])))
-    #is there a better way to do the following? 
-    paired_filters[:,[0,1],[0]] = specdata['filter_trans'][:,[0,1]]
-    paired_filters[:,[0,1],[1]] = specdata['filter_trans'][:,[2,3]]
+    count = [] #count the numbers of filters in each pair so we can initialize correct matrix
+    for filt in specdata['filters']:
+        count.append(len(filt)) 
+    paired_filters =  np.zeros((len(specdata['Lambdas']),np.max(count),len(specdata['filters'])))
+    #fill in paired filter matrix 
+    j = -1
+    for ipair, pairs in enumerate(specdata['filters']):
+        for ifilt,filt in enumerate(specdata['filters'][ipair]):
+            j=j+1
+            paired_filters[:,[ifilt],[ipair]] = specdata['filter_trans'][:,[j]]
+
+    # paired_filters[:,[0,1],[0]] = specdata['filter_trans'][:,[0,1]]
+    # paired_filters[:,[0,1],[1]] = specdata['filter_trans'][:,[2,3]]
     cameras = specdata['cameras']
-    #if beam splitter is set to none, change values to 1 
-    if kwargs['beamsplitter'] == 'none':
-        specdata['beam_split'][:,:] = 1
+
     k=0
     nRows = nCols = len(FPs)
     dayRowCol = np.array([i + 1 for i in range(nRows * nCols)]).reshape(nRows, nCols)

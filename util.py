@@ -233,32 +233,32 @@ def get_filepaths(datafolder, **kwargs):
     bs_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
 
     bs = ['TR-DFLY-CMDM-565'] #name of beam spliter
-    if kwargs['filters']:
-        print('using requested filters...',kwargs['filters'])
-        filters = kwargs['filters']
+    if kwargs:
+        if kwargs['filters']:
+            print('using requested filters...',kwargs['filters'])
+            filters = kwargs['filters']
+
+        if kwargs['cameras']: 
+            cameras = kwargs['cameras']
+            print('using requested cameras...')
+            default_cams = ['Andor_iXon','BSI_Prime_Express']
+            cam1 = kwargs['cameras'][0]
+            cam2 = kwargs['cameras'][1]
+            if cam1 == default_cams[0]:
+                cam1_path = ixon_path
+            elif cam1 == default_cams[1]:
+                cam1_path = bsi_path
+            else:
+                print('Specficied camera1 not found, try: Andor_iXon (or) BSI_Prime_Express')
+            if cam2 == default_cams[0]:
+                cam2_path = ixon_path
+            elif cam1 == default_cams[1]:
+                cam2_path = bsi_path
+            else:
+                print('Specficied camera2 not found, try: Andor_iXon (or) BSI_Prime_Express')
     else:
         print('using default fitlers...', [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']])
         filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
-    if kwargs['cameras']: 
-        cameras = kwargs['cameras']
-        print('using requested cameras...')
-        default_cams = ['Andor_iXon','BSI_Prime_Express']
-        cam1 = kwargs['cameras'][0]
-        cam2 = kwargs['cameras'][1]
-        if cam1 == default_cams[0]:
-            cam1_path = ixon_path
-        elif cam1 == default_cams[1]:
-            cam1_path = bsi_path
-        else:
-            print('Specficied camera1 not found, try: Andor_iXon (or) BSI_Prime_Express')
-        if cam2 == default_cams[0]:
-            cam2_path = ixon_path
-        elif cam1 == default_cams[1]:
-            cam2_path = bsi_path
-        else:
-            print('Specficied camera2 not found, try: Andor_iXon (or) BSI_Prime_Express')
-
-    else:
         print('using default cameras (Andor iXon | BSI Prime Express ')
         cam1_path = ixon_path 
         cam2_path = bsi_path
@@ -270,12 +270,15 @@ def get_filepaths(datafolder, **kwargs):
     return(paths)
 
 #function for retreiving all data together in a list
-def get_spectra(FPs, paths, laser_lines):
+def get_spectra(FPs, paths, laser_lines,**kwargs):
     #function for retreving QE curves, filter spectra, FP spectra, dichroic mirror, laser data
     #inputs: 
     # FPs: list of flourescent proteins in experiment
     # paths: output of get_filepaths function
-    #lines lines, waveslengths of lasers used (ie 405)
+    #laser_lines, waveslengths of lasers used (ie 405)
+        #optional input:
+        #'beamsplitter = 'none'
+            #this is for when no beamsplitter was used 
     #outputs Exicitation and Emmission for FPs (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
     #lasers will have a combined wavelength by lasers excitation data for the each pair inputted lasers
 
@@ -310,6 +313,10 @@ def get_spectra(FPs, paths, laser_lines):
     filter_trans = get_em_filters(paths['filter_folder'], paths['filters'], Lambdas)
     #load beam splitter 
     beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
+        #if beam splitter is set to none, change values to 1 
+    if kwargs:
+        if kwargs['beamsplitter'] == 'none':
+            beam_split[:,:] = 1
     #assemble dict
     specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"cameras":paths['cameras'],"QE_cameras":QE_cameras,"lasers":lasers,"laser_widths":laser_widths,"dichroic":dichroic,"filters":paths['filters'],"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
     return(specdata)
