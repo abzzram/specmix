@@ -217,6 +217,7 @@ def get_beam_spliiter(bs_folder, bs, wavelengths):
 
 ##function for retrieving default file paths
 def get_filepaths(datafolder, **kwargs):
+    #fix: doesn't work if only filters is provided as kwarg
     #assemble paths names of parts in Dragonfly_tramsission_spectra folder
     #input: location of folder where Dragonfly_transmission_spectra folder lives
     #optional inputs: non default filters (default: [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] 
@@ -244,6 +245,7 @@ def get_filepaths(datafolder, **kwargs):
             default_cams = ['Andor_iXon','BSI_Prime_Express']
             cam1 = kwargs['cameras'][0]
             cam2 = kwargs['cameras'][1]
+            # pdb.set_trace()
             if cam1 == default_cams[0]:
                 cam1_path = ixon_path
             elif cam1 == default_cams[1]:
@@ -252,7 +254,7 @@ def get_filepaths(datafolder, **kwargs):
                 print('Specficied camera1 not found, try: Andor_iXon (or) BSI_Prime_Express')
             if cam2 == default_cams[0]:
                 cam2_path = ixon_path
-            elif cam1 == default_cams[1]:
+            elif cam2 == default_cams[1]:
                 cam2_path = bsi_path
             else:
                 print('Specficied camera2 not found, try: Andor_iXon (or) BSI_Prime_Express')
