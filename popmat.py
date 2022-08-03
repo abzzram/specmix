@@ -62,8 +62,8 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 beam_split_trans = np.array(specdata['beam_split'])[:,mp] #not sure which cameras gets which beam yet
                 filter_em = np.array(paired_filters)[:,mp,m]#correct
                 # filter_em = np.array(paired_filters)[:,mp,mp]#
-
                 Quan_eff = np.array(specdata['QE_cameras'])[:,mp] #make sure this is correct camera order 
+                # Quan_eff = np.array(specdata['QE_cameras'])[:,mp] #correct#make sure this is correct camera order 
                 dichroic_trans = np.array(specdata['dichroic'])[:,1]
                 #constants
                 Quan_yield = np.array(specdata['QY'])[nFP]
@@ -86,8 +86,8 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 axis1.plot(specdata['Lambdas'],dichroic_trans)
                 axis1.fill_between(specdata['Lambdas'],em_prod)
                 if k ==4:
-                    axis1.legend(('em','beam_splitter','filter','QE','dichroic','captured emission'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)
-                    axis2.legend(('ex','laser pair'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)                  
+                    axis1.legend(('emission','beam_splitter','filter','QE','dichroic','captured emission'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)
+                    axis2.legend(('laser pair','excitation'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)                  
                 if k>=12:
                     axis1.set_xlabel('Wavelength')
                     axis2.set_xlabel('Wavelength')
