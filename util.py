@@ -283,7 +283,7 @@ def get_spectra(FPs, paths, laser_lines,**kwargs):
             #this is for when no beamsplitter was used 
     #outputs Exicitation and Emmission for FPs (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
     #lasers will have a combined wavelength by lasers excitation data for the each pair inputted lasers
-
+    FPs = np.concatenate(FPs)
     EX_EM, QY, Lambdas = get_FP_spectra(FPs) #get spectra
     # QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
     QE_cameras = get_QEs(Lambdas,paths['cam1_path'],paths['cam2_path'],paths['cameras']) #get camera QE

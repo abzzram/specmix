@@ -3,14 +3,13 @@ import pdb
 import matplotlib as plt
 
 def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
+    """ 
     # Input: a dictionary of spectral data
-    # Output: a numpy array with our spectral mixing model,
-    # Generate empty matrix c_m,m',n
-    # For example:
-    # 2 exc lines
-    # 2 em filters
-    # 4 FPS
-    # Empty 2 x 2 x 4 array
+    # Output: a numpy array with our spectral mixing model channel-fluorophore sensitivity constant
+        Rows = channels: in the order of Laser pair 1: cam1, cam2, then Laser pair 2: cam1, cam2
+        Columns: FPs in the order provided
+    # Generate empty matrix c_m,m',n 
+    # Empty 2 x 2 x 4 array """
 
     FPs = specdata['FPs'] #get FP names
     cameras = specdata['cameras']
@@ -59,12 +58,10 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 exc_part = np.sum(laser_spec  *  abs_spec) # Collect excitation bits and sum/integrate
                 # Collect emission terms
                 em_spec = np.array(specdata['EX_EM'][1,nFP])
-                beam_split_trans = np.array(specdata['beam_split'])[:,mp] #not sure which cameras gets which beam yet
-                filter_em = np.array(paired_filters)[:,mp,m]#correct
-                # filter_em = np.array(paired_filters)[:,mp,mp]#
-                Quan_eff = np.array(specdata['QE_cameras'])[:,mp] #make sure this is correct camera order 
-                # Quan_eff = np.array(specdata['QE_cameras'])[:,mp] #correct#make sure this is correct camera order 
-                dichroic_trans = np.array(specdata['dichroic'])[:,1]
+                beam_split_trans = np.array(specdata['beam_split'])[:,mp] 
+                filter_em = np.array(paired_filters)[:,mp,m]
+                Quan_eff = np.array(specdata['QE_cameras'])[:,mp] 
+                dichroic_trans = np.array(specdata['dichroic'])[:,1] #dichroic always the same 
                 #constants
                 Quan_yield = np.array(specdata['QY'])[nFP]
                 t_exp = np.array(exposure_times)[m]
@@ -85,18 +82,18 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 axis1.plot(specdata['Lambdas'],Quan_eff)
                 axis1.plot(specdata['Lambdas'],dichroic_trans)
                 axis1.fill_between(specdata['Lambdas'],em_prod)
-                if k ==4:
+                #legned 
+                if k == len(FPs)**2:
                     axis1.legend(('emission','beam_splitter','filter','QE','dichroic','captured emission'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)
-                    axis2.legend(('laser pair','excitation'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)                  
-                if k>=12:
-                    axis1.set_xlabel('Wavelength')
-                    axis2.set_xlabel('Wavelength')
-                if k%4 ==1:
-                    axis1.set_ylabel('Tramsmission')
-                    axis2.set_ylabel('Tramsmission')
-                print(exc_line, em_filter, FP,cameras[mp], c_3d[m,mp,nFP])   
+                    axis2.legend(('laser pair','excitation'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)       
+                axis1.set_xlabel('Wavelength')
+                axis2.set_xlabel('Wavelength')
+                axis1.set_ylabel('Tramsmission')
+                axis2.set_ylabel('Tramsmission')
+                print('Lasers: ',exc_line, em_filter, FP,cameras[mp], c_3d[m,mp,nFP],'Exposure time: ',t_exp) 
                 axis1.set_title(FP + ' emission.' + '\n'  + 'Filter: ' + em_filter + ' Camera: ' + cameras[mp] ,fontsize=8)      
                 axis2.set_title(FP + ' excitation. Lasers: ' +  (' | '.join(exc_line) ),fontsize=8)      
+                # pdb.set_trace()
 
     # Collapse over first two dimensions
     fig1.tight_layout()
