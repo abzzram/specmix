@@ -14,12 +14,13 @@ import matplotlib.pyplot as plt
 import pdb
 import os
 from os.path import exists
+import re
 
-#make it all into a function for retreiving SP spectra 
+
 #returns spectra in EX_EM (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
 #also return quantum yield of FPs in QY (N by 1)
 #also returns 'lambas', which is the wavelegnths that EX/EM corresponds to (300 to 800)
-def get_FP_spectra(FPs):
+def get_FP_spectra(FPs,datafolder):
 #download all FP data from FP base, modify Talon's code 
     # filename = wget.download('https://www.fpbase.org/api/proteins/spectra/?name__iexact=mTagBFP2&default_state__qy__gte=0.7&format=json')
     FP_file = 'FP_spectra.wget'
@@ -32,10 +33,14 @@ def get_FP_spectra(FPs):
     else:
         print('spectra file found...')
         filename = './FP_spectra.wget'
-
+    
     with open(filename, 'r') as f:
         fc = json.load(f)
         f.close()
+    #load in dye spectra csv 
+    dyefile = datafolder + 'McNamara Boswell PubSpectra 20090427M (Excel 2007).csv'
+    dyes = pd.read_csv(dyefile)
+    dyes = dyes.T
 #extract names of flourescent proteins 
     FP_names = []
     for i in fc:
@@ -45,27 +50,83 @@ def get_FP_spectra(FPs):
     FP_inds = []
     for fp in FPs:
         FP_inds.append([FP_names.index(name) for name in FP_names if name == fp])
-    FP_inds = np.array(FP_inds) #convert to array
+    # FP_inds = np.array(FP_inds) #convert to array
     
     #get spectra for each FP, 
     lambdas = np.arange(300,801,1) #range wavelengths to store
     EX_EM = np.zeros((2,len(FPs),len(lambdas)))
     QY = np.zeros(len(FPs)); #quantum yield
     for i,ifp in enumerate(FP_inds):
-        lambda_ex = np.array(fc[int(ifp)]['spectra'][0]['data']) # n by 2 array of wavelengths and data
-        for n, ilambda in enumerate(lambda_ex):
-            if (lambdas == ilambda[0]).any(): #skip wavelengths that aren't shared 
-                jj = np.argwhere(lambdas == ilambda[0])[0][0] #find index of ex wavelength containedin databse
-                EX_EM[0,i,jj]  = lambda_ex[n,1]
-        lambda_em = np.array(fc[int(ifp)]['spectra'][1]['data']) # n by 2 array of em wavelengths and data
-        for n2, ilambda2 in enumerate(lambda_em):
-            if (lambdas == ilambda2[0]).any(): #skip wavelengths that aren't shared 
-                jj = np.argwhere(lambdas == ilambda2[0])[0][0] #find index of ex wavelength containedin databse
-                EX_EM[1,i,jj]  = lambda_em[n2,1]
-    #get quantum yield
-        QY[i] = fc[int(ifp)]['spectra'][1]['qy']
-    # os.remove('FPs.wget') #delete the downloaded FP file 
+        if ifp:
+            ifp = ifp[0]
+            lambda_ex = np.array(fc[int(ifp)]['spectra'][0]['data']) # n by 2 array of wavelengths and data
+            for n, ilambda in enumerate(lambda_ex):
+                if (lambdas == ilambda[0]).any(): #skip wavelengths that aren't shared 
+                    jj = np.argwhere(lambdas == ilambda[0])[0][0] #find index of ex wavelength containedin databse
+                    EX_EM[0,i,jj]  = lambda_ex[n,1]
+            lambda_em = np.array(fc[int(ifp)]['spectra'][1]['data']) # n by 2 array of em wavelengths and data
+            for n2, ilambda2 in enumerate(lambda_em):
+                if (lambdas == ilambda2[0]).any(): #skip wavelengths that aren't shared 
+                    jj = np.argwhere(lambdas == ilambda2[0])[0][0] #find index of ex wavelength containedin databse
+                    EX_EM[1,i,jj]  = lambda_em[n2,1]
+        #get quantum yield
+            QY[i] = fc[int(ifp)]['spectra'][1]['qy']
+        else:
+
+
+
+            starting_ind = 57
+            vals = dyes.iloc[0,starting_ind:] #get available wavelegnths, this database starts at lambda = 59
+            vals = np.array([int(i) for i in vals])
+            matches_exind = []#for storing indeces
+            matches_emind = []
+            matches_ex = []#for storing names
+            matches_em = []
+            FP = FPs[i] + ' ' #add space for specificity when seaching dye csv
+            print('searching for dyes')
+            for idye, dyename in enumerate(dyes[0]):
+                match = re.search(FP,dyename) #serach for dye name 
+                if match:
+                    match_em = re.search(' em',dyename,re.IGNORECASE) #search for excitation
+                    match_ex = re.search(' ex',dyename,re.IGNORECASE) #search for em
+                    if match_em:
+                        matches_emind.append(idye)
+                        matches_em.append(dyename)
+                    if match_ex:
+                        matches_exind.append(idye)
+                        matches_ex.append(dyename)
+                #now that we found pontial indeces, make sure we use the correct one if more than one was found 
+            if len(matches_ex) >1:
+                print('warning: more than one match for ex: ', FP) 
+                print(matches_ex)
+            elif len(matches_ex) ==1:
+                #get ex spectra 
+                for ilam, lam in enumerate(lambdas):
+                    lam = int(lam)
+                    wvl_ind = np.argwhere(vals == lam) + starting_ind#get index of wavelength in table
+                    EX_EM[0,i,ilam] =dyes.iloc[matches_exind[0],int(wvl_ind)] #collect data
+
+            if len(matches_em) >1:
+                print('warning: more than one match forem: ', FP) 
+            elif len(matches_em) ==1:
+                for ilam, lam in enumerate(lambdas):
+                    lam = int(lam)
+                    wvl_ind = np.argwhere(vals == lam) + starting_ind#get index of wavelength in table
+                    EX_EM[1,i,ilam] =dyes.iloc[matches_emind[0],int(wvl_ind)] #collect data
+                Quantum_yield = dyes.iloc[matches_emind[0],11] #this is where QY is stored in csv
+                #if no QY found, assume 1 and give warnings
+                if np.isnan(Quantum_yield):
+                    print('WARNING: quantum yield not found in dye database....\n Assuming QY = 1 for', FP)
+                    print('Consider finding correct QY and updating dye database')
+                    QY[i] = 1
+                else:
+                    QY[i] = Quantum_yield
+                
+        
+#get rid of nans
+    EX_EM = np.nan_to_num(EX_EM)   
     return(EX_EM,QY, lambdas)
+    
 
 
 #function for retriving camera QEs
@@ -185,6 +246,7 @@ def get_em_filters(filter_folder, filters, wavelengths):
 
 #beam splitter
 def get_beam_spliiter(bs_folder, bs, wavelengths):
+    """ 
     #retrieve beam splitter data. returns wavelength by 2(1-Transmission, Transmission) array
     #no reflection data so it's calculated as 1-transmission. 
     #Transmission lets 565+ light through 
@@ -198,7 +260,7 @@ def get_beam_spliiter(bs_folder, bs, wavelengths):
         # plt.legend(['1 - Transmission','Transmission',])
         # plt.xlabel('Wavelength')
         # plt.ylabel('Tramsmission')
-        # plt.show()
+        # plt.show()  """
 
     colnames = ['Wavelength','Transmission']
     beam_split = np.zeros((len(wavelengths),2)) #initialize beam spliter data, col 1 is blue, col 2 is red  
@@ -216,15 +278,17 @@ def get_beam_spliiter(bs_folder, bs, wavelengths):
     return(beam_split)
 
 ##function for retrieving default file paths
-def get_filepaths(datafolder, **kwargs):
+def get_filepaths(datafolder, cameras=['Andor_iXon','BSI_Prime_Express'], 
+                  filters=[['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']]):
+    """ 
     #fix: doesn't work if only filters is provided as kwarg
     #assemble paths names of parts in Dragonfly_tramsission_spectra folder
     #input: location of folder where Dragonfly_transmission_spectra folder lives
     #optional inputs: non default filters (default: [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] 
         #filters must be defined as they are in filters folder in Dragonfly Transmission Spectra/Data/semrock_filters_bs folder
         #or non default cameras( default: )
-    #assemble name of filters and beam spliter
-    #returns dictionary of paths and names of default filters
+    #assemble name of filters and beam spliter """
+    #returns dictionary of paths and names of default filters 
     bsi_path =  datafolder + 'Drangonfly_transmission_spectra/BSI_Prime_Express/BSI_Prime_Express_QE.csv'
     ixon_path = datafolder + 'Drangonfly_transmission_spectra/iXonCamera/IXON-L-888 Sensor QE.csv'
     laser_file = datafolder + 'Drangonfly_transmission_spectra/Lasers/Laser_lines.csv'
@@ -234,45 +298,29 @@ def get_filepaths(datafolder, **kwargs):
     bs_folder = datafolder + 'Drangonfly_transmission_spectra/Semrock_filters_bs/'
 
     bs = ['TR-DFLY-CMDM-565'] #name of beam spliter
-    if kwargs:
-        if kwargs['filters']:
-            print('using requested filters...',kwargs['filters'])
-            filters = kwargs['filters']
-
-        if kwargs['cameras']: 
-            cameras = kwargs['cameras']
-            print('using requested cameras...')
-            default_cams = ['Andor_iXon','BSI_Prime_Express']
-            cam1 = kwargs['cameras'][0]
-            cam2 = kwargs['cameras'][1]
-            # pdb.set_trace()
-            if cam1 == default_cams[0]:
-                cam1_path = ixon_path
-            elif cam1 == default_cams[1]:
-                cam1_path = bsi_path
-            else:
-                print('Specficied camera1 not found, try: Andor_iXon (or) BSI_Prime_Express')
-            if cam2 == default_cams[0]:
-                cam2_path = ixon_path
-            elif cam2 == default_cams[1]:
-                cam2_path = bsi_path
-            else:
-                print('Specficied camera2 not found, try: Andor_iXon (or) BSI_Prime_Express')
+    default_cams = ['Andor_iXon','BSI_Prime_Express']
+    cam1 = cameras[0]
+    cam2 = cameras[1]
+    if cam1 == default_cams[0]:
+        cam1_path = ixon_path
+    elif cam1 == default_cams[1]:
+        cam1_path = bsi_path
     else:
-        print('using default fitlers...', [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']])
-        filters = [['TR-DFLY-F450-050','TR-DFLY-F600-050'],['TR-DFLY-F521-038','TR-DFLY-F698-077']] #input filter names  
-        print('using default cameras (Andor iXon | BSI Prime Express ')
-        cam1_path = ixon_path 
+        print('Specficied camera1 not found, try: Andor_iXon (or) BSI_Prime_Express')
+    if cam2 == default_cams[0]:
+        cam2_path = ixon_path
+    elif cam2 == default_cams[1]:
         cam2_path = bsi_path
-        cameras = ['Andor_iXon','BSI_Prime_Express']
-    # cam1_path =
-    # cam2_path =  
-    paths = {"cameras":cameras,"cam1_path":cam1_path, "cam2_path":cam2_path,"laser_file":laser_file, "laser_widths":laser_widths, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
+    else:
+        print('Specficied camera2 not found, try: Andor_iXon (or) BSI_Prime_Express')
+   
+    paths = {"cameras":cameras,"cam1_path":cam1_path, "cam2_path":cam2_path,"laser_file":laser_file, "laser_widths":laser_widths, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs,"datafolder":datafolder}
     # paths = {"bsi_path":bsi_path, "ixon_path":ixon_path,"laser_file":laser_file, "laser_widths":laser_widths, "dichroic_file":dichroic_file,"filter_folder":filter_folder,"bs_folder":bs_folder,"filters":filters,"bs":bs}
     return(paths)
 
 #function for retreiving all data together in a list
 def get_spectra(FPs, paths, laser_lines,**kwargs):
+    """ 
     #function for retreving QE curves, filter spectra, FP spectra, dichroic mirror, laser data
     #inputs: 
     # FPs: list of flourescent proteins in experiment
@@ -281,10 +329,10 @@ def get_spectra(FPs, paths, laser_lines,**kwargs):
         #optional input:
         #'beamsplitter = 'none'
             #this is for when no beamsplitter was used 
-    #outputs Exicitation and Emmission for FPs (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
-    #lasers will have a combined wavelength by lasers excitation data for the each pair inputted lasers
+    #outputs Exicitation and Emmission for FPs (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800)) """
+    #lasers will have a combined wavelength by lasers excitation data for the each pair inputted lasers 
     FPs = np.concatenate(FPs)
-    EX_EM, QY, Lambdas = get_FP_spectra(FPs) #get spectra
+    EX_EM, QY, Lambdas = get_FP_spectra(FPs,paths['datafolder']) #get spectra
     # QE_cameras = get_QEs(Lambdas,paths['bsi_path'],paths['ixon_path']) #get camera QE
     QE_cameras = get_QEs(Lambdas,paths['cam1_path'],paths['cam2_path'],paths['cameras']) #get camera QE
     #load saved laser lines

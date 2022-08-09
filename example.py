@@ -9,9 +9,10 @@ datafolder =  './Data/' #where the Dragonfly_transmission_spectra folder live
 
 paths = util.get_filepaths(datafolder) #there's optional inputs for different filter pairs!
 
-# FPs = ['mTagBFP2','mNeonGreen','mScarlet','iRFP670'] #these have to be exact matches as FPbase name
-FPs = [['mTagBFP2','mScarlet'],['mNeonGreen','iRFP670']] #these have to be exact matches as FPbase name
+# FPs = [['mTagBFP2','mScarlet'],['mNeonGreen','iRFP670']] #these have to be exact matches as FPbase name
+FPs = [['mTagBFP2','TagRFP'],['mNeonGreen','iRFP670']] #these have to be exact matches as FPbase name
 
+#alternatives to scarlet are mStrawberry, mTangerine, but QY is low
 exc_lines = [['405','561'],['488','637']]# input paired laser lines #needs to be in quotes so can index into the csv
 laser_powers = [1,1,1,1] #Percentages 
 exposure_times = [100, 200]

@@ -8,6 +8,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     # Output: a numpy array with our spectral mixing model channel-fluorophore sensitivity constant
         Rows = channels: in the order of Laser pair 1: cam1, cam2, then Laser pair 2: cam1, cam2
         Columns: FPs in the order provided
+        Diagonals indicate sensitivity constant of desired FP for each channel. Off-diagonals indicate cross talk 
     # Generate empty matrix c_m,m',n 
     # Empty 2 x 2 x 4 array """
 
@@ -29,7 +30,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     count = [] #count the numbers of filters in each pair so we can initialize correct matrix
     for filt in specdata['filters']:
         count.append(len(filt)) 
-    paired_filters =  np.zeros((len(specdata['Lambdas']),np.max(count),len(specdata['filters']))) #check this line
+    paired_filters =  np.zeros((len(specdata['Lambdas']),np.max(count),len(specdata['filters']))) #c
     #fill in paired filter matrix 
     j = -1
     for ipair, pairs in enumerate(specdata['filters']):
