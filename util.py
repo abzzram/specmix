@@ -15,12 +15,15 @@ import pdb
 import os
 from os.path import exists
 import re
+import popmat
 
 
-#returns spectra in EX_EM (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
-#also return quantum yield of FPs in QY (N by 1)
-#also returns 'lambas', which is the wavelegnths that EX/EM corresponds to (300 to 800)
+
 def get_FP_spectra(FPs,datafolder):
+    """ Returns spectra in EX_EM (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800))
+        #also return quantum yield of FPs in QY (N by 1)
+        #also returns 'lambas', which is the wavelegnths that EX/EM corresponds to (300 to 800)
+        # If dye is provdided, it will look for its name in dye spectra database"""
 #download all FP data from FP base, modify Talon's code 
     # filename = wget.download('https://www.fpbase.org/api/proteins/spectra/?name__iexact=mTagBFP2&default_state__qy__gte=0.7&format=json')
     FP_file = 'FP_spectra.wget'
@@ -72,9 +75,6 @@ def get_FP_spectra(FPs,datafolder):
         #get quantum yield
             QY[i] = fc[int(ifp)]['spectra'][1]['qy']
         else:
-
-
-
             starting_ind = 57
             vals = dyes.iloc[0,starting_ind:] #get available wavelegnths, this database starts at lambda = 59
             vals = np.array([int(i) for i in vals])
@@ -120,9 +120,7 @@ def get_FP_spectra(FPs,datafolder):
                     print('Consider finding correct QY and updating dye database')
                     QY[i] = 1
                 else:
-                    QY[i] = Quantum_yield
-                
-        
+                    QY[i] = Quantum_yield     
 #get rid of nans
     EX_EM = np.nan_to_num(EX_EM)   
     return(EX_EM,QY, lambdas)
@@ -132,13 +130,13 @@ def get_FP_spectra(FPs,datafolder):
 #function for retriving camera QEs
 #put it all into a function
 def get_QEs(Lambdas, cam1path, cam2path,cameras):
-# def get_QEs(Lambdas, bsi_path, ixon_path):
-    #Retreive quantum efficiency of the BSI Prime Express and iXon cameras
+    """ 
+    #Retreive quantum efficiency of the BSI Prime Express and iXon cameras or selected cameras 
     #inputs: wavelengths corresponding to QE needed (should be the same as all other spectra data )
     #output, wavelength by 2 array of QEs for BSI (col 0) and iXon (col 1)
         #for intepolating nans ('https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array')
         #other inputs are the file locations for each camera's QE data 
-        #Lets define first a simple helper function in order to make it more straightforward to handle indices and logical indices of NaNs:
+        #Lets define first a simple helper function in order to make it more straightforward to handle indices and logical indices of NaNs: """
     def nan_helper(y):
         """Helper to handle indices and logical indices of NaNs.
 
@@ -206,15 +204,16 @@ def get_QEs(Lambdas, cam1path, cam2path,cameras):
 
 #fucntion for getting filter data
 def get_em_filters(filter_folder, filters, wavelengths):
+    """ 
     #assemble filter transmission spectra for input filters. For certain filters the data
     #is missing values, so this function will also fill those in 
     #Returns wavelength by n filters array of transmission data 
-# example:
-# filter_folder = './Drangonfly_transmission_spectra/Semrock_filters_bs/'
-# wavelengths = np.arange(300, 801,1)#define wavelengths 
-# filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
-# filter_trans = get_em_filters(filter_folder, filters, Lambdas)
-# plt.plot(Lambdas, filter_trans[:,1]) 
+        # example:
+        # filter_folder = './Drangonfly_transmission_spectra/Semrock_filters_bs/'
+        # wavelengths = np.arange(300, 801,1)#define wavelengths 
+        # filters = ['TR-DFLY-F521-038' , 'TR-DFLY-F698-077'] #input filter names  
+        # filter_trans = get_em_filters(filter_folder, filters, Lambdas)
+        # plt.plot(Lambdas, filter_trans[:,1]) """
     
     all_filters = filters[0] + filters[1] #convert to list
     filter_trans = np.zeros((len(wavelengths),len(all_filters))) #initialize filters 
@@ -319,7 +318,7 @@ def get_filepaths(datafolder, cameras=['Andor_iXon','BSI_Prime_Express'],
     return(paths)
 
 #function for retreiving all data together in a list
-def get_spectra(FPs, paths, laser_lines,**kwargs):
+def get_spectra(FPs, paths, laser_lines,beamsplitter = 'true'):
     """ 
     #function for retreving QE curves, filter spectra, FP spectra, dichroic mirror, laser data
     #inputs: 
@@ -327,7 +326,7 @@ def get_spectra(FPs, paths, laser_lines,**kwargs):
     # paths: output of get_filepaths function
     #laser_lines, waveslengths of lasers used (ie 405)
         #optional input:
-        #'beamsplitter = 'none'
+        #'beamsplitter = 'false'
             #this is for when no beamsplitter was used 
     #outputs Exicitation and Emmission for FPs (2 (ex/em) by n (#of FPs) by spectra (arranged from wavelength 300 to 800)) """
     #lasers will have a combined wavelength by lasers excitation data for the each pair inputted lasers 
@@ -363,10 +362,39 @@ def get_spectra(FPs, paths, laser_lines,**kwargs):
     filter_trans = get_em_filters(paths['filter_folder'], paths['filters'], Lambdas)
     #load beam splitter 
     beam_split = get_beam_spliiter(paths['bs_folder'], paths['bs'], Lambdas)
-        #if beam splitter is set to none, change values to 1 
-    if kwargs:
-        if kwargs['beamsplitter'] == 'none':
-            beam_split[:,:] = 1
+    #     #if beam splitter is set to none, change values to 1 
+    # if kwargs:
+    #     if kwargs['beamsplitter'] == 'none':
+    #         beam_split[:,:] = 1
+    if beamsplitter == 'false':
+         beam_split[:,:] = 1
+    elif beamsplitter == 'true':
+        print('using defaul beamsplitter settings... ')
+    # else:
+    #     pdb.set_trace()
     #assemble dict
     specdata = {"Lambdas":Lambdas, "EX_EM":EX_EM,"cameras":paths['cameras'],"QE_cameras":QE_cameras,"lasers":lasers,"laser_widths":laser_widths,"dichroic":dichroic,"filters":paths['filters'],"filter_trans":filter_trans,"beam_split":beam_split,"QY":QY, "FPs":FPs}
     return(specdata)
+
+def specmix_matrix(datafolder,FPs, exc_lines, laser_powers, exposure_times,**kwargs):
+    """Main function for obtaining channel-fluorophore sepcificity constants.
+    Uses location of datafolder to get paths of microscope parts
+    Uses paths to retreive transission info"""
+    if kwargs:
+        if 'cameras' in kwargs and 'filters' in kwargs:
+            paths = get_filepaths(datafolder,cameras = kwargs['cameras'],filters = kwargs['filters'])
+        elif 'cameras' in kwargs and not 'filters' in kwargs :
+            paths = get_filepaths(datafolder,cameras = kwargs['cameras'])
+        elif 'filters' in kwargs and not 'cameras' in kwargs :
+            paths = get_filepaths(datafolder,fitlers = kwargs['filters'])
+        if 'beamsplitter' in kwargs:
+            specdata = get_spectra(FPs, paths, exc_lines,beamsplitter = kwargs['beamsplitter'])
+        else:
+            specdata = get_spectra(FPs, paths, exc_lines)
+    else:
+        paths = get_filepaths(datafolder) #<-this function has optional inputs for defining alternate filters/cameras, not sure how to pass those in
+        specdata = get_spectra(FPs, paths, exc_lines) # <- this function has one optional input: (beamsplitter ='false') removes beamsplitter from calculation
+    c_2d = popmat.populate_matrix(specdata, exc_lines, laser_powers, exposure_times, **kwargs)
+    return(c_2d)
+
+

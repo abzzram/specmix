@@ -37,8 +37,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
         for ifilt,filt in enumerate(specdata['filters'][ipair]):
             j=j+1
             paired_filters[:,[ifilt],[ipair]] = specdata['filter_trans'][:,[j]]
-
-
+    #for plots 
     k=0
     nRows = nCols = len(FPs)
     dayRowCol = np.array([i + 1 for i in range(nRows * nCols)]).reshape(nRows, nCols)
@@ -48,6 +47,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     c_3d = np.empty((len(exc_lines),np.max(count),len(FPs)))
     c_3d[:] = np.NaN
     for m, exc_line in enumerate(exc_lines):
+
         for mp, em_filter in enumerate(specdata['filters'][m]):
             for nFP, FP in enumerate(FPs):
                 k = k+1 #for subplots
@@ -57,11 +57,23 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 abs_spec = np.array(specdata['EX_EM'][0,nFP])
                 ex_prod = (laser_spec  *  abs_spec)
                 exc_part = np.sum(laser_spec  *  abs_spec) # Collect excitation bits and sum/integrate
-                # Collect emission terms
+                #collect emission terms 
+                #optional changing of beamsplitter settings, also picks correct camera to use 
+                number_excitations = len(exc_line)
+                if number_excitations == 1 and 'beamsplitter' in kwargs and len(FPs) > 2: #only urn on single excitation, where correct bs and camera need to be defined
+                    # cur_beamsplitter = specdata['beam_split'][:,[0,1]] 
+                    curr_bs = specdata['beam_split'][:,kwargs['beamsplitter'][m]] 
+                    curr_cam = specdata['QE_cameras'][:,kwargs['beamsplitter'][m]] 
+                    beam_split_trans = np.array(curr_bs[:,mp])
+                    Quan_eff = np.array(curr_cam[:,mp]) 
+                    camera_name = cameras[kwargs['beamsplitter'][m][0]] #will only run when on single excitation, so m will always be 0
+                else: #define bs and QE when optional/custom bs is not provided 
+                    beam_split_trans = np.array(specdata['beam_split'])[:,mp] 
+                    Quan_eff = np.array(specdata['QE_cameras'])[:,mp] 
+                    camera_name = cameras[mp]
+                # Collect other emission terms
                 em_spec = np.array(specdata['EX_EM'][1,nFP])
-                beam_split_trans = np.array(specdata['beam_split'])[:,mp] 
                 filter_em = np.array(paired_filters)[:,mp,m]
-                Quan_eff = np.array(specdata['QE_cameras'])[:,mp] 
                 dichroic_trans = np.array(specdata['dichroic'])[:,1] #dichroic always the same 
                 #constants
                 Quan_yield = np.array(specdata['QY'])[nFP]
@@ -91,8 +103,8 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 axis2.set_xlabel('Wavelength')
                 axis1.set_ylabel('Tramsmission')
                 axis2.set_ylabel('Tramsmission')
-                print('Lasers: ',exc_line, em_filter, FP,cameras[mp], c_3d[m,mp,nFP],'Exposure time: ',t_exp) 
-                axis1.set_title(FP + ' emission.' + '\n'  + 'Filter: ' + em_filter + ' Camera: ' + cameras[mp] ,fontsize=8)      
+                print('Lasers: ',exc_line, em_filter, FP,camera_name, c_3d[m,mp,nFP],'Exposure time: ',t_exp) 
+                axis1.set_title(FP + ' emission.' + '\n'  + 'Filter: ' + em_filter + ' Camera: ' + camera_name ,fontsize=8)      
                 axis2.set_title(FP + ' excitation. Lasers: ' +  (' | '.join(exc_line) ),fontsize=8)      
                 # pdb.set_trace()
 
@@ -110,5 +122,5 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
     if np.isnan(c_2d).any():
         print('...\n...\n Warning: number of excitation lines are different for each camera. Removing NaN rows from unmixing matrix \n...\n...\n')
         c_2d = c_2d[~np.isnan(c_2d).any(axis=1)]
-    print('Unmixing matrix: \n',c_2d)
+    print(' Channel-fluorophore cross talk matrix: \n',c_2d)
     return c_2d
