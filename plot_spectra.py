@@ -35,8 +35,9 @@ FPs = 'mTagBFP2','mNeonGreen','mScarlet','iRFP670' #these have to be exact match
 datafolder = './Data/'
 folder_bsi = datafolder + 'Drangonfly_transmission_spectra/BSI_Prime_Express/BSI_Prime_Express_QE.csv'
 folder_ixon = datafolder + 'Drangonfly_transmission_spectra/iXonCamera/IXON-L-888 Sensor QE.csv'
-EX_EM, QY, Lambdas = util.get_FP_spectra(FPs) #get spectra
-QE_cameras = util.get_QEs(Lambdas,folder_bsi,folder_ixon) #get camera QE
+EX_EM, QY, Lambdas = util.get_FP_spectra(FPs,datafolder) #get spectra
+cameras = ['BSI_Prime_Express', 'Andor_iXon']
+QE_cameras = util.get_QEs(Lambdas,folder_bsi,folder_ixon,cameras) #get camera QE
 
 #load saved laser lines
 laser_file = datafolder + './Drangonfly_transmission_spectra/Lasers/Laser_lines.csv'

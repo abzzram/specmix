@@ -15,4 +15,10 @@ exc_lines = [['561'],['637']]# input paired laser lines #needs to be in quotes s
 laser_powers = [ 1,1] #Percentages 
 exposure_times = [100, 100]
 c_2d = util.specmix_matrix(datafolder,FPs, exc_lines, laser_powers, exposure_times,cameras = cams, filters= filts,beamsplitter = 'false')
+row_sums = c_2d .sum(axis=1)
+new_matrix = c_2d  / row_sums[:, np.newaxis]
+#noramlize matrix for printing
 
+print('\n Channel-fluorophore cross talk matrix (Normalized): \n')
+np.set_printoptions(suppress=2, precision=3)
+print(new_matrix)

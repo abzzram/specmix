@@ -55,8 +55,11 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 # Collect excitation terms
                 laser_spec = np.array(paired_lasers[:,m])
                 abs_spec = np.array(specdata['EX_EM'][0,nFP])
-                ex_prod = (laser_spec  *  abs_spec)
-                exc_part = np.sum(laser_spec  *  abs_spec) # Collect excitation bits and sum/integrate
+                dichroic_ref = np.array(1 - specdata['dichroic'])[:,1] 
+                # dichroic_ref =1
+                ex_prod = (dichroic_ref * laser_spec  *  abs_spec)
+                exc_part = np.sum(dichroic_ref * laser_spec  *  abs_spec) # Collect excitation bits and sum/integrate
+                
                 #collect emission terms 
                 #optional changing of beamsplitter settings, also picks correct camera to use 
                 number_excitations = len(exc_line)
@@ -85,6 +88,7 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 axis2 = ax2[rowIdx, colIdx]
                 axis2.plot(specdata['Lambdas'],laser_spec)
                 axis2.plot(specdata['Lambdas'],abs_spec)
+                axis2.plot(specdata['Lambdas'],dichroic_ref)
                 axis2.fill_between(specdata['Lambdas'],ex_prod)
 
                 #plot em spectra
@@ -97,8 +101,8 @@ def populate_matrix(specdata, exc_lines, laser_powers, exposure_times,**kwargs):
                 axis1.fill_between(specdata['Lambdas'],em_prod)
                 #legned 
                 if k == len(FPs)**2:
-                    axis1.legend(('emission','beam_splitter','filter','QE','dichroic','captured emission'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)
-                    axis2.legend(('laser pair','excitation'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=3)       
+                    axis1.legend(('emission','beam_splitter','filter','QE','dichroic','captured emission'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=1)
+                    axis2.legend(('laser pair','excitation','dichroic'),loc='center left', bbox_to_anchor=(1, 1.1),ncol=1)       
                 axis1.set_xlabel('Wavelength')
                 axis2.set_xlabel('Wavelength')
                 axis1.set_ylabel('Tramsmission')
