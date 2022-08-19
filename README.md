@@ -18,10 +18,16 @@ cd specmix
 ```
 
 # Create environment
+```
 conda env create -f environment.yml
+```
 
 # Activate environment
+```
 conda activate specmix
+```
 
 # Try first example
+```
 python example.py
+```
